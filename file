@@ -1,0 +1,51 @@
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+typedef struct Record {
+    int sid, bid; char title[80]; char date[15];
+    struct Record *next;
+} Record;
+
+Record* issue_book(Record *head, int sid,int bid,char *title,char *date){
+    Record *r=malloc(sizeof(Record)); r->sid=sid; r->bid=bid; strcpy(r->title,title); strcpy(r->date,date); r->next=NULL;
+    if(!head) return r;
+    Record *t=head; while(t->next) t=t->next; t->next=r; return head;
+}
+Record* return_book(Record *head,int sid,int bid){
+    Record *t=head,*prev=NULL;
+    while(t && !(t->sid==sid && t->bid==bid)){ prev=t; t=t->next; }
+    if(!t){ printf("Record not found\n"); return head; }
+    if(!prev){ head=head->next; free(t); } else { prev->next=t->next; free(t); }
+    printf("Book returned\n"); return head;
+}
+void display_history(Record *head, int sid){
+    Record *t=head; printf("History for %d:\nBid\tTitle\tDate\n",sid);
+    while(t){ if(t->sid==sid) printf("%d\t%s\t%s\n",t->bid,t->title,t->date); t=t->next; }
+}
+void search_book(Record *head, int bid){
+    Record *t=head; while(t){ if(t->bid==bid) printf("Found: SID %d Title %s Date %s\n",t->sid,t->title,t->date); t=t->next; }
+}
+Record* clone_history(Record *head){
+    if(!head) return NULL;
+    Record *nh=NULL,*tail=NULL,*t=head;
+    while(t){ Record *n=malloc(sizeof(Record)); *n=*t; n->next=NULL; if(!nh) nh=tail=n; else { tail->next=n; tail=n; } t=t->next; }
+    return nh;
+}
+int count_total(Record *head){ int c=0; while(head){ c++; head=head->next; } return c; }
+void free_records(Record *h){ while(h){ Record *t=h; h=h->next; free(t);} }
+
+int main(){
+    Record *head=NULL; int ch;
+    while(1){
+        printf("\n1.Issue 2.Return 3.Display history 4.Search book 5.Clone 6.Count 7.Exit\nChoice: "); if(scanf("%d",&ch)!=1) break;
+        if(ch==1){ int sid,bid; char title[80],date[15]; printf("sid bid title date: "); scanf("%d %d %79s %14s",&sid,&bid,title,date); head = issue_book(head,sid,bid,title,date); }
+        else if(ch==2){ int sid,bid; printf("sid bid: "); scanf("%d %d",&sid,&bid); head = return_book(head,sid,bid); }
+        else if(ch==3){ int sid; printf("sid: "); scanf("%d",&sid); display_history(head,sid); }
+        else if(ch==4){ int bid; printf("bid: "); scanf("%d",&bid); search_book(head,bid); }
+        else if(ch==5){ Record *cl = clone_history(head); printf("Cloned list:\n"); Record *t=cl; while(t){ printf("%d %d %s %s\n",t->sid,t->bid,t->title,t->date); t=t->next; } free_records(cl); }
+        else if(ch==6) printf("Total borrowed: %d\n", count_total(head));
+        else break;
+    }
+    free_records(head); return 0;
+}
